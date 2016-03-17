@@ -8,6 +8,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -37,13 +38,18 @@ func main() {
 	var imports []imp
 
 	for _, dir := range flag.Args() {
-		pkg, err := buildctx.ImportDir(dir, 0)
+		abs, err := filepath.Abs(dir)
+		if err != nil {
+			log.Fatalf("could not get absolute path for dir %s: %v", dir, err)
+		}
+
+		pkg, err := buildctx.ImportDir(abs, 0)
 		if err != nil {
 			log.Fatalf("could not get package for dir %s: %v", dir, err)
 		}
 
 		for _, importPath := range pkg.Imports {
-			i := imp{path: importPath, from: dir}
+			i := imp{path: importPath, from: abs}
 			imports = append(imports, i)
 		}
 	}
