@@ -58,7 +58,7 @@ func main() {
 		i := imports[0]
 		imports = imports[1:] // shift
 
-		if _, ok := visited[i]; ok {
+		if _, ok := visited[i]; ok || i.path == "C" {
 			continue
 		}
 		visited[i] = true
