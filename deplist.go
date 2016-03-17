@@ -40,12 +40,12 @@ func main() {
 	for _, dir := range flag.Args() {
 		abs, err := filepath.Abs(dir)
 		if err != nil {
-			log.Fatalf("could not get absolute path for dir %s: %v", dir, err)
+			log.Fatalf("could not get absolute path for dir %q: %v", dir, err)
 		}
 
 		pkg, err := buildctx.ImportDir(abs, 0)
 		if err != nil {
-			log.Fatalf("could not get package for dir %s: %v", dir, err)
+			log.Fatalf("could not get package for dir %q: %v", dir, err)
 		}
 
 		for _, importPath := range pkg.Imports {
