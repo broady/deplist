@@ -58,14 +58,14 @@ func main() {
 		i := imports[0]
 		imports = imports[1:] // shift
 
-		if _, ok := visited[i]; ok {
+		if _, ok := visited[i]; ok || i.path == "C" {
 			continue
 		}
 		visited[i] = true
 
 		pkg, err := buildctx.Import(i.path, i.from, 0)
 		if err != nil {
-			log.Fatalf("could not get package %s, imported from %s: %v", i.path, i.from, err)
+			log.Fatalf("could not get package %q, imported from %q: %v", i.path, i.from, err)
 		}
 
 		if !*goroot && pkg.Goroot {
