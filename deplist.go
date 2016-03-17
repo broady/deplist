@@ -6,17 +6,24 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 )
 
 var (
 	tags   = flag.String("tags", "", "comma-separated list of build tags to apply")
 	goroot = flag.Bool("goroot", false, "include imports in GOROOT")
 	usage  = flag.Bool("h", false, "print usage")
+	tsv    = flag.Bool("tsv", false, "use only a single tab between columns")
 )
+
+type flusher interface {
+	Flush() error
+}
 
 func main() {
 	flag.Parse()
@@ -54,6 +61,11 @@ func main() {
 		}
 	}
 
+	var w io.Writer = os.Stdout
+	if !*tsv {
+		w = tabwriter.NewWriter(os.Stdout, 80, 4, 0, ' ', 0)
+	}
+
 	for len(imports) != 0 {
 		i := imports[0]
 		imports = imports[1:] // shift
@@ -72,11 +84,14 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("%s\t%s\t%s\n", i.from, i.path, pkg.Dir)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", i.from, i.path, pkg.Dir)
 
 		for _, i := range pkg.Imports {
 			imports = append(imports, imp{path: i, from: pkg.Dir})
 		}
+	}
+	if f, ok := w.(flusher); ok {
+		f.Flush()
 	}
 }
 
