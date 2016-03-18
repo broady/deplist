@@ -83,7 +83,7 @@ func main() {
 			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\n", i.from, i.path, pkg.Dir)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", i.from, i.path, pkg.SrcRoot, pkg.ImportPath)
 
 		for _, i := range pkg.Imports {
 			imports = append(imports, imp{path: i, from: pkg.Dir})
