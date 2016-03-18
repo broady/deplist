@@ -62,7 +62,7 @@ func main() {
 
 	var w io.Writer = os.Stdout
 	if !*tsv {
-		w = tabwriter.NewWriter(os.Stdout, 80, 4, 0, ' ', 0)
+		w = tabwriter.NewWriter(os.Stdout, 8, 0, 4, ' ', 0)
 	}
 
 	for len(imports) != 0 {
