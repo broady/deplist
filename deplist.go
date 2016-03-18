@@ -24,9 +24,14 @@ type flusher interface {
 	Flush() error
 }
 
+type importFrom struct {
+	path    string
+	fromDir string
+}
+
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "usage: pkglist [-tags] [-goroot] <dirs...>")
+		fmt.Fprintln(os.Stderr, "usage: deplist [-tags] [-goroot] <dirs...>")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -40,8 +45,13 @@ func main() {
 	buildctx := build.Default
 	buildctx.BuildTags = strings.Split(*tags, ",")
 
-	visited := make(map[imp]bool)
-	var imports []imp
+	var w io.Writer = os.Stdout
+	if !*tsv {
+		w = tabwriter.NewWriter(os.Stdout, 8, 0, 4, ' ', 0)
+	}
+
+	visited := make(map[importFrom]bool)
+	var imports []importFrom
 
 	for _, dir := range flag.Args() {
 		abs, err := filepath.Abs(dir)
@@ -55,14 +65,11 @@ func main() {
 		}
 
 		for _, importPath := range pkg.Imports {
-			i := imp{path: importPath, from: abs}
-			imports = append(imports, i)
+			imports = append(imports, importFrom{
+				path:    importPath,
+				fromDir: abs,
+			})
 		}
-	}
-
-	var w io.Writer = os.Stdout
-	if !*tsv {
-		w = tabwriter.NewWriter(os.Stdout, 8, 0, 4, ' ', 0)
 	}
 
 	for len(imports) != 0 {
@@ -74,26 +81,26 @@ func main() {
 		}
 		visited[i] = true
 
-		pkg, err := buildctx.Import(i.path, i.from, 0)
+		pkg, err := buildctx.Import(i.path, i.fromDir, 0)
 		if err != nil {
-			log.Fatalf("could not get package %q, imported from %q: %v", i.path, i.from, err)
+			log.Fatalf("could not get package %q, imported from %q: %v", i.path, i.fromDir, err)
 		}
 
 		if !*goroot && pkg.Goroot {
 			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", i.from, i.path, pkg.SrcRoot, pkg.ImportPath)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", i.fromDir, i.path, pkg.SrcRoot, pkg.ImportPath)
 
-		for _, i := range pkg.Imports {
-			imports = append(imports, imp{path: i, from: pkg.Dir})
+		for _, importPath := range pkg.Imports {
+			imports = append(imports, importFrom{
+				path:    importPath,
+				fromDir: pkg.Dir,
+			})
 		}
 	}
+
 	if f, ok := w.(flusher); ok {
 		f.Flush()
 	}
-}
-
-type imp struct {
-	path, from string
 }
