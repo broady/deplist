@@ -15,20 +15,19 @@ import (
 var (
 	tags   = flag.String("tags", "", "comma-separated list of build tags to apply")
 	goroot = flag.Bool("goroot", false, "include imports in GOROOT")
-	usage  = flag.Bool("h", false, "print usage")
 )
 
 func main() {
-	flag.Parse()
-
-	if *usage {
-		flag.Usage()
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "usage: pkglist [-tags] [-goroot] <dirs...>")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
+	flag.Parse()
+
 	if flag.NArg() == 0 {
-		fmt.Fprintln(os.Stderr, "usage: pkglist [-tags] [-h] <dirs...>")
-		os.Exit(1)
+		flag.Usage()
 	}
 
 	buildctx := build.Default
