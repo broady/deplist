@@ -29,9 +29,10 @@ import (
 )
 
 var (
-	tags   = flag.String("tags", "", "comma-separated list of build tags to apply")
-	goroot = flag.Bool("goroot", false, "include imports in GOROOT")
-	tsv    = flag.Bool("tsv", false, "use only a single tab between columns")
+	tags    = flag.String("tags", "", "comma-separated list of build tags to apply")
+	goroot  = flag.Bool("goroot", false, "include imports in GOROOT")
+	tsv     = flag.Bool("tsv", false, "use only a single tab between columns")
+	release = flag.String("release", build.Default.ReleaseTags[len(build.Default.ReleaseTags)-1], "latest Go version to use")
 )
 
 type flusher interface {
@@ -58,6 +59,13 @@ func main() {
 
 	buildctx := build.Default
 	buildctx.BuildTags = strings.Split(*tags, ",")
+	buildctx.ReleaseTags = make([]string, 0)
+	for _, tag := range build.Default.ReleaseTags {
+		buildctx.ReleaseTags = append(buildctx.ReleaseTags, tag)
+		if *release == tag {
+			break
+		}
+	}
 
 	var w io.Writer = os.Stdout
 	if !*tsv {
